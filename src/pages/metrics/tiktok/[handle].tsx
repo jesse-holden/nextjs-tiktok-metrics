@@ -30,11 +30,11 @@ const stringToLocaleNumber = (value: number | string): string => {
 
 const floatToPercent = (value: number | string): string => {
   const num = Number(value);
-  return `${num * 100}%`;
+  return `${num} %`;
 };
 
 const FormatGridDataValueCases = {
-  'Interaction-rate': floatToPercent,
+  interaction_rate: floatToPercent,
   default: stringToLocaleNumber,
 };
 

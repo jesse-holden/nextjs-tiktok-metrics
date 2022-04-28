@@ -57,7 +57,7 @@ export default function HomePage() {
       <main>
         <section className='bg-white'>
           <div className='layout mx-20 flex min-h-screen flex-col items-center p-5 text-center'>
-            <h1 className='mt-48 py-32 text-5xl font-semibold text-dark'>
+            <h1 className='mt-48 py-32 text-4xl font-semibold text-dark md:text-5xl'>
               TikTok Metrics
             </h1>
             <p className='p-2 text-xl font-medium leading-8 text-medium'>
@@ -68,14 +68,15 @@ export default function HomePage() {
               onSubmit={handleSubmit}
             >
               <span
-                className='relative left-24 select-none text-dark'
+                className='relative left-22 select-none text-dark'
                 onClick={() => inputRef.current?.focus()}
               >
                 tiktok.com/@
               </span>
-              <span className='ml-24'>
+              <span className='ml-22'>
                 <TikTokUsernameInput
                   ref={inputRef}
+                  spellCheck={false}
                   type='text'
                   required
                   placeholder='username'

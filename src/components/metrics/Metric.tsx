@@ -17,7 +17,7 @@ export default function Metric({
   return (
     <div
       className={clsxm(
-        'my-16 border-t-2 border-gray-400 px-8 pt-32',
+        'my-16 border-t-1 border-gray-400 px-8 pt-32',
         index < 3 && 'md:border-t-0 md:pt-0',
         index % 3 === 0 && 'md:ml-16',
         index % 3 === 2 && 'md:mr-16',

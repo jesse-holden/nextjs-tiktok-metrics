@@ -48,13 +48,13 @@ export default function TikTokMetricsUserPage() {
                   <p className='mb-8 w-full text-2xl font-semibold text-dark'>
                     tiktok.com/@{handle}
                   </p>
-                  <div className='w-152 rounded-16 border-2 border-gray-400 p-4'>
+                  <div className='w-152 rounded-16 border-1 border-gray-400 p-4'>
                     <span className='pl-3 font-semibold text-dark'>
                       Display Name
                     </span>
                   </div>
                 </div>
-                <div className='mt-16 grid grid-cols-2 gap-0 border-b-2 border-gray-400 py-16 md:grid-cols-3 md:rounded-16 md:border-b-0 md:ring-2 md:ring-gray-400'>
+                <div className='mt-16 grid grid-cols-2 gap-0 border-b-1 border-gray-400 py-16 md:grid-cols-3 md:rounded-16 md:border-b-0 md:py-32 md:ring-1 md:ring-gray-400'>
                   <div className='contents'>
                     {gridData.map((item, index) => (
                       <Metric key={item.title} index={index} title={item.title}>

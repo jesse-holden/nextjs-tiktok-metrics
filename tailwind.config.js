@@ -110,9 +110,13 @@ module.exports = {
         4: '0.25rem',
         6: '0.375rem',
         8: '0.5rem',
+        10: '0.625rem',
         12: '0.75rem',
+        14: '0.875rem',
         16: '1rem',
+        18: '1.125rem',
         20: '1.25rem',
+        22: '1.32rem',
         24: '1.5rem',
         28: '1.75rem',
         32: '2rem',
@@ -136,6 +140,7 @@ module.exports = {
         640: '40rem',
       },
       borderRadius: {
+        1: '1px',
         2: '2px',
         4: '4px',
         6: '6px',
@@ -150,6 +155,9 @@ module.exports = {
         56: '56px',
         64: '64px',
         72: '72px',
+      },
+      borderWidth: {
+        1: '1px',
       },
       colors: {
         DEFAULT: '#0F1D40',

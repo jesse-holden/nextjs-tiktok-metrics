@@ -1,10 +1,12 @@
-import * as React from 'react';
+import { useRouter } from 'next/router';
+import { useRef, useState } from 'react';
+import { mutate } from 'swr';
 
+import { fetcher } from '@/lib/fetcher';
+
+import ShowPerformanceButtonPage from '@/components/buttons/ShowPerformanceButton';
+import TikTokUsernameInput from '@/components/inputs/TikTokUsernameInput';
 import Layout from '@/components/layout/Layout';
-import ArrowLink from '@/components/links/ArrowLink';
-import ButtonLink from '@/components/links/ButtonLink';
-import UnderlineLink from '@/components/links/UnderlineLink';
-import UnstyledLink from '@/components/links/UnstyledLink';
 import Seo from '@/components/Seo';
 
 /**
@@ -14,58 +16,79 @@ import Seo from '@/components/Seo';
  * You can override the next-env if the type is important to you
  * @see https://stackoverflow.com/questions/68103844/how-to-override-next-js-svg-module-declaration
  */
-import Vercel from '~/svg/Vercel.svg';
-
-// !STARTERCONF -> Select !STARTERCONF and CMD + SHIFT + F
-// Before you begin editing, follow all comments with `STARTERCONF`,
-// to customize the default configuration.
 
 export default function HomePage() {
+  const [inputValue, setInputValue] = useState('');
+  const router = useRouter();
+  const [isFetching, setIsFetching] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [touched, setTouched] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const onChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
+    setInputValue(e.target.value);
+    setTouched(true);
+    setError(null);
+  };
+
+  const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (e) => {
+    e.preventDefault();
+    if (!inputValue) return;
+    try {
+      setTouched(false);
+      setIsFetching(true);
+      const key = `/api/metrics/tiktok/users/${inputValue}`;
+      const data = await fetcher(key);
+      mutate(key, data);
+      router.push(`/metrics/tiktok/${inputValue}`);
+    } catch (e) {
+      if (e instanceof Error) {
+        setError(e.message);
+      }
+    } finally {
+      setIsFetching(false);
+    }
+  };
+
   return (
     <Layout>
-      {/* <Seo templateTitle='Home' /> */}
-      <Seo />
+      <Seo templateTitle='Home' />
 
       <main>
         <section className='bg-white'>
-          <div className='layout flex min-h-screen flex-col items-center justify-center text-center'>
-            <Vercel className='text-5xl' />
-            <h1 className='mt-4'>
-              Next.js + Tailwind CSS + TypeScript Starter
+          <div className='layout mx-20 flex min-h-screen flex-col items-center p-5 text-center'>
+            <h1 className='mt-48 py-32 text-5xl font-semibold text-dark'>
+              TikTok Metrics
             </h1>
-            <p className='mt-2 text-sm text-gray-800'>
-              A starter for Next.js, Tailwind CSS, and TypeScript with Absolute
-              Import, Seo, Link component, pre-configured with Husky{' '}
+            <p className='p-2 text-xl font-medium leading-8 text-medium'>
+              Find out how the Creator&apos;s last 10 videos performed.
             </p>
-            <p className='mt-2 text-sm text-gray-700'>
-              <ArrowLink href='https://github.com/theodorusclarence/ts-nextjs-tailwind-starter'>
-                See the repository
-              </ArrowLink>
-            </p>
-
-            <ButtonLink className='mt-6' href='/components' variant='light'>
-              See all components
-            </ButtonLink>
-
-            <UnstyledLink
-              href='https://vercel.com/new/git/external?repository-url=https%3A%2F%2Fgithub.com%2Ftheodorusclarence%2Fts-nextjs-tailwind-starter'
-              className='mt-4'
+            <form
+              className='mt-24 w-full items-center font-semibold md:w-640'
+              onSubmit={handleSubmit}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                width='92'
-                height='32'
-                src='https://vercel.com/button'
-                alt='Deploy with Vercel'
-              />
-            </UnstyledLink>
-
-            <footer className='absolute bottom-2 text-gray-700'>
-              © {new Date().getFullYear()} By{' '}
-              <UnderlineLink href='https://theodorusclarence.com?ref=tsnextstarter'>
-                Theodorus Clarence
-              </UnderlineLink>
-            </footer>
+              <span
+                className='relative left-24 select-none text-dark'
+                onClick={() => inputRef.current?.focus()}
+              >
+                tiktok.com/@
+              </span>
+              <span className='ml-24'>
+                <TikTokUsernameInput
+                  ref={inputRef}
+                  type='text'
+                  required
+                  placeholder='username'
+                  onChange={onChange}
+                  error={error}
+                />
+              </span>
+              <ShowPerformanceButtonPage
+                disabled={!inputValue.length || isFetching || !touched}
+              >
+                {isFetching ? 'Fetching Data...' : 'Show Performance'}
+              </ShowPerformanceButtonPage>
+            </form>
           </div>
         </section>
       </main>

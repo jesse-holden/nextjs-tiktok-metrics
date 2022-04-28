@@ -1,4 +1,4 @@
-export const fetcher = async (url: string) => {
+export const fetcher = async <T = unknown>(url: string) => {
   const res = await fetch(url);
   const data = await res.json();
 
@@ -6,5 +6,5 @@ export const fetcher = async (url: string) => {
     throw new Error(data.message);
   }
 
-  return data;
+  return data as T;
 };

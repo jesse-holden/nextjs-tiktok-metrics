@@ -1,21 +1,14 @@
 import { useRouter } from 'next/router';
-import { useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { mutate } from 'swr';
 
 import { fetcher } from '@/lib/fetcher';
+import { TikTokUserMetrics } from '@/lib/tiktok-api';
 
 import ShowPerformanceButtonPage from '@/components/buttons/ShowPerformanceButton';
 import TikTokUsernameInput from '@/components/inputs/TikTokUsernameInput';
 import Layout from '@/components/layout/Layout';
 import Seo from '@/components/Seo';
-
-/**
- * SVGR Support
- * Caveat: No React Props Type.
- *
- * You can override the next-env if the type is important to you
- * @see https://stackoverflow.com/questions/68103844/how-to-override-next-js-svg-module-declaration
- */
 
 export default function HomePage() {
   const [inputValue, setInputValue] = useState('');
@@ -38,9 +31,11 @@ export default function HomePage() {
       setTouched(false);
       setIsFetching(true);
       const key = `/api/metrics/tiktok/users/${inputValue}`;
-      const data = await fetcher(key);
+      const data = await fetcher<TikTokUserMetrics>(key);
       mutate(key, data);
-      router.push(`/metrics/tiktok/${inputValue}`);
+
+      // We are using ?s=1 query param to skip the server-side data fetch
+      router.push(`/metrics/tiktok/${inputValue}?s=1`);
     } catch (e) {
       if (e instanceof Error) {
         setError(e.message);

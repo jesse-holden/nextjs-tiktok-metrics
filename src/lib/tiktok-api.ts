@@ -37,3 +37,41 @@ export default class TikTokAPI {
     return response.data;
   }
 }
+
+export type TikTokUserMetrics = {
+  user: {
+    display_name: string;
+  };
+  metrics: {
+    total_followers: number;
+    average_video_views: number;
+    interaction_rate: number;
+    average_comments: number;
+    average_likes: number;
+    average_shares: number;
+  };
+};
+
+export async function getTikTokUserMetrics(identifier: string) {
+  await new Promise((resolve) => setTimeout(resolve, 1500));
+
+  if (identifier === 'fail') {
+    return null;
+  }
+
+  const data: TikTokUserMetrics = {
+    user: {
+      display_name: identifier,
+    },
+    metrics: {
+      total_followers: Math.floor(Math.random() * 100_000),
+      average_video_views: Math.floor(Math.random() * 100_000),
+      interaction_rate: Math.floor(Math.random() * 100),
+      average_comments: Math.floor(Math.random() * 10_000),
+      average_likes: Math.floor(Math.random() * 10_000),
+      average_shares: Math.floor(Math.random() * 10_000),
+    },
+  };
+
+  return data;
+}

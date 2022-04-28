@@ -3,13 +3,13 @@ import * as React from 'react';
 import clsxm from '@/lib/clsxm';
 
 type MetricProps = {
-  title: string;
+  label: string;
   index: number;
 } & React.ComponentPropsWithoutRef<'div'>;
 
 export default function Metric({
   className,
-  title,
+  label,
   children,
   index,
   ...rest
@@ -34,7 +34,7 @@ export default function Metric({
         )}
       >
         <p className='whitespace-nowrap text-xs font-semibold text-medium'>
-          {title}
+          {label}
         </p>
         <p className='text-3xl font-semibold text-dark'>{children}</p>
       </div>

@@ -140,8 +140,8 @@ async function scrapeTikTokPage(
   }
 
   if (
-    (body?.match(/const option = {"title":"tiktok-verify-page"/) || []).length >
-    1
+    body &&
+    (body.match(/const option = {"title":"tiktok-verify-page"/) || []).length
   ) {
     await cacheStore.delete(url);
     throw new Error('Verification page detected');
@@ -163,33 +163,23 @@ async function getTikTokVideoInfo(url: string): Promise<{
     body.match(
       /data-e2e="comment-count" class="tiktok[\w\d\s-]+">([0-9.\w]+)<\//
     ) || [];
-  if (!commentCount) {
-    // console.log(body);
-    throw new Error('Could not find comment count');
-  }
-  data.commentCount = formatTikTokNumbers(commentCount);
+  data.commentCount = formatTikTokNumbers(commentCount ?? 0);
 
   // Likes count
   const [, likesCount] =
     body.match(
       /data-e2e="like-count" class="tiktok[\w\d\s-]+">([0-9.\w]+)<\//
     ) || [];
-  if (!likesCount) {
-    // console.log(body);
-    throw new Error('Could not find likes count');
-  }
-  data.likesCount = formatTikTokNumbers(likesCount);
+
+  data.likesCount = formatTikTokNumbers(likesCount ?? 0);
 
   // Shares count
   const [, sharesCount] =
     body.match(
       /data-e2e="share-count" class="tiktok[\w\d\s-]+">([0-9.\w]+)<\//
     ) || [];
-  if (!sharesCount) {
-    // console.log(body);
-    throw new Error('Could not find shares count');
-  }
-  data.sharesCount = formatTikTokNumbers(sharesCount);
+
+  data.sharesCount = formatTikTokNumbers(sharesCount ?? 0);
 
   return { data, cached };
 }
@@ -238,7 +228,7 @@ export async function getTikTokUserMetrics(identifier: string) {
     ) || [];
   const tikTokNewestVideoIdsRegxp = /\d{19}/g;
   const [...tikTokNewestVideoIds] = Array.from(
-    tikTokNewestVideoIdsGroup.matchAll(tikTokNewestVideoIdsRegxp),
+    (tikTokNewestVideoIdsGroup || '').matchAll(tikTokNewestVideoIdsRegxp),
     (m) => m[0]
   ).slice(0, 10);
 

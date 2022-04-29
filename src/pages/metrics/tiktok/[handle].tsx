@@ -64,26 +64,37 @@ export const getServerSideProps: GetServerSideProps = async ({
     };
   }
 
-  const data = await getTikTokUserMetrics(handle);
-  props.fallback[key] = data;
+  try {
+    const data = await getTikTokUserMetrics(handle);
+    props.fallback[key] = data;
 
-  res.setHeader(
-    'Cache-Control',
-    'public, s-maxage=30, stale-while-revalidate=299'
-  );
+    res.setHeader(
+      'Cache-Control',
+      'public, s-maxage=30, stale-while-revalidate=299'
+    );
 
-  return {
-    props,
-    ...(!data
-      ? {
-          redirect: {
-            permanent: false,
-            // Navigate back to the home page if user does not exist
-            destination: '/',
-          },
-        }
-      : {}),
-  };
+    return {
+      props,
+      ...(!data
+        ? {
+            redirect: {
+              permanent: false,
+              // Navigate back to the home page if user does not exist
+              destination: '/',
+            },
+          }
+        : {}),
+    };
+  } catch (err) {
+    return {
+      props,
+      redirect: {
+        permanent: false,
+        // Navigate back to the home page if user does not exist
+        destination: '/',
+      },
+    };
+  }
 };
 
 interface Props {

@@ -150,38 +150,36 @@ async function scrapeTikTokPage(
   return { body: body ?? null, cached: !!cached };
 }
 
+const tikTokVideoCountMap = {
+  commentCount:
+    /data-e2e="comment-count" class="tiktok[\w\d\s-]+">([0-9.\w]+)<\//,
+  sharesCount: /data-e2e="share-count" class="tiktok[\w\d\s-]+">([0-9.\w]+)<\//,
+  likesCount: /data-e2e="like-count" class="tiktok[\w\d\s-]+">([0-9.\w]+)<\//,
+};
+
+function getCount(selector: RegExp, searchBody: string): number {
+  const [, count] = searchBody.match(selector) || [];
+  return formatTikTokNumbers(count ?? 0);
+}
+
 async function getTikTokVideoInfo(url: string): Promise<{
   data: { commentCount: number; likesCount: number; sharesCount: number };
   cached: boolean;
 }> {
-  const data = { commentCount: 0, likesCount: 0, sharesCount: 0 };
   const { body, cached } = await scrapeTikTokPage(url);
-  if (!body) return { data, cached };
+  if (!body)
+    return { data: { commentCount: 0, likesCount: 0, sharesCount: 0 }, cached };
 
-  // Comment count
-  const [, commentCount] =
-    body.match(
-      /data-e2e="comment-count" class="tiktok[\w\d\s-]+">([0-9.\w]+)<\//
-    ) || [];
-  data.commentCount = formatTikTokNumbers(commentCount ?? 0);
-
-  // Likes count
-  const [, likesCount] =
-    body.match(
-      /data-e2e="like-count" class="tiktok[\w\d\s-]+">([0-9.\w]+)<\//
-    ) || [];
-
-  data.likesCount = formatTikTokNumbers(likesCount ?? 0);
-
-  // Shares count
-  const [, sharesCount] =
-    body.match(
-      /data-e2e="share-count" class="tiktok[\w\d\s-]+">([0-9.\w]+)<\//
-    ) || [];
-
-  data.sharesCount = formatTikTokNumbers(sharesCount ?? 0);
-
-  return { data, cached };
+  return {
+    data: Object.entries(tikTokVideoCountMap).reduce(
+      (acc, [key, regexp]) => ({
+        ...acc,
+        [key]: getCount(regexp, body),
+      }),
+      {} as { [key in keyof typeof tikTokVideoCountMap]: number }
+    ),
+    cached,
+  };
 }
 
 export async function getTikTokUserMetrics(identifier: string) {
@@ -236,6 +234,7 @@ export async function getTikTokUserMetrics(identifier: string) {
   let totalSharesCount = 0;
   let totalLikesCount = 0;
 
+  //TODO: refactor and make async
   for (const videoId of tikTokNewestVideoIds) {
     const videoURL = `https://www.tiktok.com/${username}/video/${videoId}`;
     const {

@@ -6,7 +6,7 @@ interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
 }
 
-export default function ShowPerformanceButtonPage({
+export default function ShowPerformanceButton({
   children,
   className,
   ...props

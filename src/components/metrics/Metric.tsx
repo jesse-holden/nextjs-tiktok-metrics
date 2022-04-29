@@ -36,7 +36,9 @@ export default function Metric({
         <p className='whitespace-nowrap text-xs font-semibold text-medium'>
           {label}
         </p>
-        <p className='text-3xl font-semibold text-dark'>{children}</p>
+        <p data-cy='metric-value' className='text-3xl font-semibold text-dark'>
+          {children}
+        </p>
       </div>
     </div>
   );

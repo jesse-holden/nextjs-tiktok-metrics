@@ -4,15 +4,21 @@ import { NextApiRequest, NextApiResponse } from 'next';
 
 import { getTikTokUserMetrics } from '@/lib/tiktok-api';
 
-const NOT_FOUND_JSON = {
+type SafeErrorResponse = {
+  error: string;
+  message: string;
+  statusCode: number;
+};
+
+const NOT_FOUND_JSON: SafeErrorResponse = {
   error: 'Not Found',
   message: 'Account does not exist',
   statusCode: 404,
 };
 
-const VERIFICATION_ERROR_JSON = {
+const VERIFICATION_ERROR_JSON: SafeErrorResponse = {
   error: 'Verification Error',
-  message: 'Verification page detected',
+  message: 'Verification page detected. Please try again later.',
   statusCode: 500,
 };
 
@@ -42,7 +48,10 @@ export default async function tiktokMetricsIdHandler(
 
     res.status(200).setHeader('Cache-Control', 's-maxage=30').json(data);
   } catch (err) {
-    if (err instanceof Error && err.message === 'Verification page detected') {
+    if (
+      err instanceof Error &&
+      err.message === 'Verification page detected. Please try again later.'
+    ) {
       return res.status(404).json(VERIFICATION_ERROR_JSON);
     } else {
       // eslint-disable-next-line no-console

@@ -164,7 +164,10 @@ export default function TikTokMetricsUserPage({ fallback }: Props) {
                     tiktok.com/@{handle}
                   </p>
                   <div className='w-152 rounded-16 border-1 border-gray-400 p-4'>
-                    <span className='pl-3 font-semibold text-dark'>
+                    <span
+                      data-cy='tiktok-displayname'
+                      className='pl-3 font-semibold text-dark'
+                    >
                       {data?.user.display_name}
                     </span>
                   </div>
@@ -172,7 +175,12 @@ export default function TikTokMetricsUserPage({ fallback }: Props) {
                 <div className='mt-16 grid grid-cols-2 gap-0 border-b-1 border-gray-400 py-16 md:grid-cols-3 md:rounded-16 md:border-b-0 md:py-32 md:ring-1 md:ring-gray-400'>
                   <div className='contents'>
                     {formattedData.map((item, index) => (
-                      <Metric key={item.label} index={index} label={item.label}>
+                      <Metric
+                        key={item.label}
+                        data-cy={item.label}
+                        index={index}
+                        label={item.label}
+                      >
                         {item.value}
                       </Metric>
                     ))}

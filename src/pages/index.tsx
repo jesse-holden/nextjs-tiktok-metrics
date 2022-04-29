@@ -1,3 +1,4 @@
+import { AxiosError } from 'axios';
 import { useRouter } from 'next/router';
 import React, { useRef, useState } from 'react';
 import { mutate } from 'swr';
@@ -5,7 +6,7 @@ import { mutate } from 'swr';
 import { fetcher } from '@/lib/fetcher';
 import { TikTokUserMetrics } from '@/lib/tiktok-api';
 
-import ShowPerformanceButtonPage from '@/components/buttons/ShowPerformanceButton';
+import ShowPerformanceButton from '@/components/buttons/ShowPerformanceButton';
 import TikTokUsernameInput from '@/components/inputs/TikTokUsernameInput';
 import Layout from '@/components/layout/Layout';
 import Seo from '@/components/Seo';
@@ -39,8 +40,11 @@ export default function HomePage() {
       // We are using ?s=1 query param to skip the server-side data fetch
       router.push(`/metrics/tiktok/${inputValue}?s=1`);
     } catch (e) {
-      if (e instanceof Error) {
-        setError(e.message);
+      if (e instanceof AxiosError) {
+        setError(e.response?.data?.message ?? 'Unknown error');
+      } else {
+        // eslint-disable-next-line no-console
+        console.error(e);
       }
     } finally {
       setIsFetching(false);
@@ -72,6 +76,7 @@ export default function HomePage() {
               </span>
               <span className='ml-22'>
                 <TikTokUsernameInput
+                  data-cy='username-input'
                   ref={inputRef}
                   spellCheck={false}
                   type='text'
@@ -80,15 +85,16 @@ export default function HomePage() {
                   onChange={onChange}
                   value={inputValue}
                   error={error}
-                  minLength={2}
+                  minLength={1}
                   maxLength={24}
                 />
               </span>
-              <ShowPerformanceButtonPage
+              <ShowPerformanceButton
+                data-cy='submit-button'
                 disabled={!inputValue.length || isFetching || !touched}
               >
                 {isFetching ? 'Fetching Data...' : 'Show Performance'}
-              </ShowPerformanceButtonPage>
+              </ShowPerformanceButton>
             </form>
           </div>
         </section>

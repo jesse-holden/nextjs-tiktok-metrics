@@ -8,46 +8,71 @@ jobs:
     name: Run ESLint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
         with:
-          node-version: '14'
+          node-version: '16'
           cache: 'yarn'
-      - run: yarn
+      - run: npm i -g yarn
+      - run: yarn install
       - run: yarn lint:strict
 
   tsc:
     name: Run Type Check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
         with:
-          node-version: '14'
+          node-version: '16'
           cache: 'yarn'
-      - run: yarn
+      - run: npm i -g yarn
+      - run: yarn install
       - run: yarn typecheck
 
   prettier:
     name: Run Prettier Check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
         with:
-          node-version: '14'
+          node-version: '16'
           cache: 'yarn'
-      - run: yarn
+      - run: npm i -g yarn
+      - run: yarn install
       - run: yarn format:check
 
   test:
     name: Run Test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
         with:
-          node-version: '14'
+          node-version: '16'
           cache: 'yarn'
-      - run: yarn
+      - run: npm i -g yarn
+      - run: yarn install
       - run: yarn test
+  cypress-run:
+    name: Run E2E Tests
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Run dev server
+        uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'yarn'
+      - run: npm i -g yarn
+      - run:
+          yarn install
+          # Cypress has its own package.json in folder "e2e"
+      - name: Run e2e tests
+        uses: cypress-io/github-action@v2
+        with:
+          start: yarn dev -p 3000
+          wait-on: 'http://localhost:3000'
+          browser: chrome
+          headless: true

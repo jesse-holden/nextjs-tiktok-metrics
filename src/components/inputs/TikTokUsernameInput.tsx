@@ -23,7 +23,10 @@ const TikTokUsernameInput = React.forwardRef<
         {...rest}
       />
       {error && (
-        <p className='mt-8 text-left text-sm font-semibold text-danger-700'>
+        <p
+          data-cy='error-message'
+          className='mt-8 text-left text-sm font-semibold text-danger-700'
+        >
           {error}
         </p>
       )}

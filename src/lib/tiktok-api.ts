@@ -2,7 +2,6 @@ import Keyv from '@keyvhq/core';
 import KeyvSQLite from '@keyvhq/sqlite';
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { gotScraping, ToughCookieJar } from 'got-scraping';
-import memoize from 'memoizee';
 import { CookieJar } from 'tough-cookie';
 import { promisify } from 'util';
 
@@ -112,39 +111,48 @@ function formatTikTokNumbers(value: string): number {
   }
 }
 
-const memoizegotScraping = memoize(gotScraping);
+function fetchTikTokURL(url: string) {
+  return gotScraping({
+    url,
+    cookieJar: cookieJar as ToughCookieJar,
+    headers: {
+      'user-agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36',
+      referer: 'https://www.tiktok.com/',
+    },
+  });
+}
 
 async function scrapeTikTokPage(
   url: string
 ): Promise<{ body: string | null; cached: boolean }> {
-  // Set cookie here if running into scraping errors
-  // await setCookie(
-  //   'sid_tt=123',
-  //   '.tiktok.com'
-  // );
-
   const cached = await cacheStore.get(url);
   let body = cached;
 
   if (!cached) {
-    const Tok = await memoizegotScraping({
-      url,
-      cookieJar: cookieJar as ToughCookieJar,
-      headers: {
-        'user-agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36',
-      },
-    });
+    // Set cookie here if running into scraping errors
+    // await _setCookie('sid_tt=abc123', '.tiktok.com');
+    // await _setCookie(
+    //   'sessionid=abc123',
+    //   '.tiktok.com'
+    // );
+    const Tok = await fetchTikTokURL(url);
     body = Tok?.body;
     await cacheStore.set(url, body);
   }
 
-  if (
-    body &&
-    (body.match(/const option = {"title":"tiktok-verify-page"/) || []).length
-  ) {
+  try {
+    if (body) {
+      if (
+        (body.match(/const option = {"title":"tiktok-verify-page"/) || [])
+          .length
+      ) {
+        throw new Error('Verification page detected. Please try again later.');
+      }
+    }
+  } catch (err) {
     await cacheStore.delete(url);
-    throw new Error('Verification page detected');
+    throw err;
   }
 
   return { body: body ?? null, cached: !!cached };
@@ -245,8 +253,8 @@ export async function getTikTokUserMetrics(identifier: string) {
       // eslint-disable-next-line no-console
       console.log('fetched', videoURL);
       // eslint-disable-next-line no-console
-      console.log('waiting 3 seconds...');
-      await new Promise((resolve) => setTimeout(resolve, 3000));
+      console.log('waiting 1.5 seconds...');
+      await new Promise((resolve) => setTimeout(resolve, 1500));
     }
     totalCommentCount += commentCount;
     totalSharesCount += sharesCount;

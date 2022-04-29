@@ -19,7 +19,9 @@ export default function HomePage() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const onChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
-    setInputValue(e.target.value);
+    // Regex replace all characters that are not allowed in a TikTok username
+    const handle = e.target.value.replace(/[^a-zA-Z0-9_]/g, '');
+    setInputValue(handle);
     setTouched(true);
     setError(null);
   };
@@ -76,7 +78,10 @@ export default function HomePage() {
                   required
                   placeholder='username'
                   onChange={onChange}
+                  value={inputValue}
                   error={error}
+                  minLength={2}
+                  maxLength={24}
                 />
               </span>
               <ShowPerformanceButtonPage

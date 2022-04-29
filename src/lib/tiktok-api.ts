@@ -175,6 +175,7 @@ async function getTikTokVideoInfo(url: string): Promise<{
   cached: boolean;
 }> {
   const { body, cached } = await scrapeTikTokPage(url);
+
   if (!body)
     return { data: { commentCount: 0, likesCount: 0, sharesCount: 0 }, cached };
 
@@ -214,7 +215,6 @@ export async function getTikTokUserMetrics(identifier: string) {
   if (!tikTokName) return null;
 
   const [, tikTokFollowers] = body.match(/followers-count">([0-9.\w]+)</) || [];
-
   const videoViewsRegxp =
     /<strong data-e2e="video-views" class="video-count [\w\d\s-]+">(.{1,15})<\/strong>/g;
   const [...tikTokVideoCounts] = Array.from(
@@ -229,9 +229,7 @@ export async function getTikTokUserMetrics(identifier: string) {
     tikTokVideoCounts.reduce((a, b) => a + b, 0) / tikTokVideoCounts.length;
 
   const [, tikTokNewestVideoIdsGroup] =
-    body.match(
-      /Newest TikTok Videos"}},"ItemList":{"user-post":{"list":\[(.*)\]/
-    ) || [];
+    body.match(/{"user-post":{"list":\[(.*)\]/) || [];
   const tikTokNewestVideoIdsRegxp = /\d{19}/g;
   const [...tikTokNewestVideoIds] = Array.from(
     (tikTokNewestVideoIdsGroup || '').matchAll(tikTokNewestVideoIdsRegxp),

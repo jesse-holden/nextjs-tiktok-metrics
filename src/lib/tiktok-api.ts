@@ -22,6 +22,7 @@ const MAX_VIDEOS_TO_SCRAPE = 10;
 export type TikTokUserMetrics = {
   user: {
     display_name: string;
+    avatar_url: string;
   };
   metrics: {
     total_followers: number;
@@ -49,6 +50,12 @@ export async function getTikTokUserMetrics(identifier: string) {
     2
   );
   if (!tikTokName) return null;
+
+  const tikTokAvatarURL: string =
+    getFirstRegExpMatch(
+      profileHTML,
+      /<style data-emotion="tiktok .{1,10}-ImgAvatar">.{1,100}<img loading="lazy" src="(.{1,250})" class="tiktok-.{1,10}-ImgAvatar/
+    ) || '';
 
   const tikTokFollowers: string = getFirstRegExpMatch(
     profileHTML,
@@ -97,6 +104,7 @@ export async function getTikTokUserMetrics(identifier: string) {
   const data = {
     user: {
       display_name: tikTokName,
+      avatar_url: tikTokAvatarURL,
     },
     metrics: {
       total_followers: formatTikTokNumbers(tikTokFollowers),

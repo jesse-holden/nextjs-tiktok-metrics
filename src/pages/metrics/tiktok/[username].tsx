@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 import * as React from 'react';
@@ -193,12 +194,19 @@ export default function TikTokMetricsUserPage({ fallback }: Props) {
                   <p className='mb-8 w-full text-2xl font-semibold text-dark'>
                     tiktok.com/@{username}
                   </p>
-                  <div className='w-152 rounded-16 border-1 border-gray-400 p-4'>
+                  <div className='inline-block rounded-16 border-1 border-gray-400 p-4'>
                     <span
                       data-cy='tiktok-displayname'
-                      className='pl-3 font-semibold text-dark'
+                      className='p-0 font-semibold text-dark'
                     >
-                      {data?.user.display_name}
+                      <img
+                        src={data?.user.avatar_url || ''}
+                        alt={data?.user.display_name}
+                        className='mx-8 inline h-24 w-24 rounded-full'
+                        width={24}
+                        height={24}
+                      />
+                      <span className='mr-12'>{data?.user.display_name}</span>
                     </span>
                   </div>
                 </div>

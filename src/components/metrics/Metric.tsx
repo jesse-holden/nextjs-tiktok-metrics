@@ -39,13 +39,16 @@ export default function Metric({
         <p className='whitespace-nowrap text-xs font-semibold text-medium'>
           {label}
         </p>
-        <p data-cy='metric-value' className='text-3xl font-semibold text-dark'>
+        <div
+          data-cy='metric-value'
+          className='overflow-clip whitespace-nowrap text-3xl font-semibold text-dark'
+        >
           {loading ? (
             <Ring size={30} lineWeight={5} speed={2.5} color='#0F1D40' />
           ) : (
             children
           )}
-        </p>
+        </div>
       </div>
     </div>
   );

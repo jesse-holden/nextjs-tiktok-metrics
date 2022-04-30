@@ -8,8 +8,8 @@ import { PublicConfiguration } from 'swr/dist/types';
 import { fetcher } from '@/lib/fetcher';
 import {
   calcInteractionRate,
-  floatToPercent,
-  stringToLocaleNumber,
+  floatToPercentString,
+  stringToLocaleString,
 } from '@/lib/formatters';
 import { match } from '@/lib/match-case';
 import { TikTokVideoMetrics } from '@/lib/scrapers';
@@ -17,6 +17,7 @@ import { getTikTokUserMetrics, TikTokUserMetrics } from '@/lib/tiktok-api';
 
 import Layout from '@/components/layout/Layout';
 import Metric from '@/components/metrics/Metric';
+import NextImage from '@/components/NextImage';
 import Seo from '@/components/Seo';
 
 type UserMetricKeys = keyof TikTokUserMetrics['metrics'];
@@ -43,10 +44,11 @@ const statsWithLoading = [
   'Interaction-rate',
 ];
 
-export const getServerSideProps: GetServerSideProps = async ({
-  query,
-  res,
-}) => {
+// Allows us to get around the NextJS wildcard limitation
+const tiktokCDNFix = (url: string) =>
+  `/api/imageProxy?imageUrl=${encodeURIComponent(url)}`;
+
+export const getServerSideProps: GetServerSideProps = async ({ query }) => {
   const username = String(query.username);
   const key = `/api/metrics/tiktok/users/${username}`;
 
@@ -78,11 +80,6 @@ export const getServerSideProps: GetServerSideProps = async ({
       };
     }
 
-    res.setHeader(
-      'Cache-Control',
-      'public, s-maxage=30, stale-while-revalidate=299'
-    );
-
     return {
       props,
     };
@@ -105,19 +102,20 @@ interface Props {
 export default function TikTokMetricsUserPage({ fallback }: Props) {
   const router = useRouter();
   const {
-    query: { username, s },
+    query: { username, s: skipPrefetch },
   } = router;
   const { data, error } = useSWR<TikTokUserMetrics>(
     () => username && `/api/metrics/tiktok/users/${username}`,
     fetcher,
     { fallback, refreshInterval: 30_000 }
   );
+  const isAdditionStatsRequired = !!data?.meta.video_stats_loading;
   const { data: videoData } = useSWR<TikTokVideoMetrics>(
-    () => username && `/api/metrics/tiktok/users-video-data/${username}`,
-    fetcher,
-    {
-      isPaused: () => !data || !data.meta.video_stats_loading,
-    }
+    () =>
+      username &&
+      isAdditionStatsRequired &&
+      `/api/metrics/tiktok/users-video-data/${username}`,
+    fetcher
   );
 
   const combinedData: TikTokUserMetrics | null = React.useMemo(() => {
@@ -141,21 +139,23 @@ export default function TikTokMetricsUserPage({ fallback }: Props) {
   }, [data, videoData]);
 
   // client-side-only code
-  if (typeof window !== 'undefined' && s) {
-    // Remove the ?s=1 query param
-    router.replace(
-      {
-        pathname: router.pathname,
-        query: { username },
-      },
-      undefined,
-      { shallow: true }
-    );
-  }
+  if (typeof window !== 'undefined') {
+    if (skipPrefetch) {
+      // Remove the ?s=1 query param
+      router.replace(
+        {
+          pathname: router.pathname,
+          query: { username },
+        },
+        undefined,
+        { shallow: true }
+      );
+    }
 
-  if (error) {
-    // Navigate back to the home page if user does not exist
-    router.replace('/', undefined, { shallow: true });
+    if (error) {
+      // Navigate back to the home page if user does not exist
+      router.replace('/', undefined, { shallow: true });
+    }
   }
 
   const formattedData: GridData[] | null = React.useMemo(() => {
@@ -164,8 +164,8 @@ export default function TikTokMetricsUserPage({ fallback }: Props) {
     return Object.entries(metrics).map(([key, metricValue]) => {
       const label = match(key, GridDataLabelMap, { emptyCaseValue: key });
       const value = match(key, {
-        interaction_rate: floatToPercent,
-        default: stringToLocaleNumber,
+        interaction_rate: floatToPercentString,
+        default: stringToLocaleString,
       })(metricValue);
 
       return {
@@ -197,14 +197,16 @@ export default function TikTokMetricsUserPage({ fallback }: Props) {
                   <div className='inline-block rounded-16 border-1 border-gray-400 p-4'>
                     <span
                       data-cy='tiktok-displayname'
-                      className='p-0 font-semibold text-dark'
+                      className='flex p-0 align-middle font-semibold text-dark'
                     >
-                      <img
-                        src={data?.user.avatar_url || ''}
-                        alt={data?.user.display_name}
-                        className='mx-8 inline h-24 w-24 rounded-full'
+                      <NextImage
+                        src={tiktokCDNFix(data?.user.avatar_url || '')}
+                        alt=''
+                        className='mx-8 inline-block h-24 w-24'
+                        imgClassName='rounded-full'
                         width={24}
                         height={24}
+                        useSkeleton
                       />
                       <span className='mr-12'>{data?.user.display_name}</span>
                     </span>

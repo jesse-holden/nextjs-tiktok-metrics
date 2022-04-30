@@ -29,6 +29,7 @@
     "typecheck": "tsc --noEmit --incremental false"
   },
   "dependencies": {
+    "@blazity/next-image-proxy": "^1.0.2",
     "@keyvhq/core": "^1.6.9",
     "@uiball/loaders": "^1.2.6",
     "axios": "^0.27.2",

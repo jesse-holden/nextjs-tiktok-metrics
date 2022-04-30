@@ -46,6 +46,11 @@ export function calcArrayAvg(array: number[], floor?: boolean): number {
   );
 }
 
+export function parseNum(value: string | number): number {
+  const parsed = Number(value);
+  return Number.isNaN(parsed) ? 0 : parsed;
+}
+
 export function calcInteractionRate(
   metrics: TikTokVideoMetrics,
   views: number
@@ -54,19 +59,17 @@ export function calcInteractionRate(
     (sum(metrics.comments, metrics.likes, metrics.shares) / views).toFixed(2)
   );
 
-  return Number.isNaN(rate) ? 0 : rate;
+  return parseNum(rate);
 }
 
 export function formatTikTokUsername(username: string): string {
   return username.startsWith('@') ? username : `@${username}`;
 }
 
-export const stringToLocaleNumber = (value: number | string): string => {
-  const num = Number(value);
-  return num.toLocaleString();
+export const stringToLocaleString = (value: number | string): string => {
+  return parseNum(value).toLocaleString();
 };
 
-export const floatToPercent = (value: number | string): string => {
-  const num = Number(value);
-  return `${num} %`;
+export const floatToPercentString = (value: number | string): string => {
+  return `${parseNum(value)} %`;
 };

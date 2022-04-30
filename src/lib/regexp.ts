@@ -43,10 +43,7 @@ export function getAllRegExpMatch(
     ? Array.from(matches as unknown as ArrayLike<string[]>, mapfn)
     : [];
 
-  if (limit) {
-    return items.slice(0, limit);
-  }
-  return items;
+  return limit ? items.slice(0, limit) : items;
 }
 
 export function getTikTokVideoStatsFromRegExp(

@@ -5,7 +5,13 @@ import useSWR from 'swr';
 import { PublicConfiguration } from 'swr/dist/types';
 
 import { fetcher } from '@/lib/fetcher';
+import {
+  calcInteractionRate,
+  floatToPercent,
+  stringToLocaleNumber,
+} from '@/lib/formatters';
 import { match } from '@/lib/match-case';
+import { TikTokVideoMetrics } from '@/lib/scrapers';
 import { getTikTokUserMetrics, TikTokUserMetrics } from '@/lib/tiktok-api';
 
 import Layout from '@/components/layout/Layout';
@@ -14,6 +20,11 @@ import Seo from '@/components/Seo';
 
 type UserMetricKeys = keyof TikTokUserMetrics['metrics'];
 
+type GridData = {
+  label: string;
+  value: string;
+};
+
 const GridDataLabelMap: Record<UserMetricKeys, string> = {
   total_followers: 'Total Followers',
   average_video_views: 'Average Video Views',
@@ -21,34 +32,22 @@ const GridDataLabelMap: Record<UserMetricKeys, string> = {
   average_comments: 'Average Comments',
   average_likes: 'Average Likes',
   average_shares: 'Average Shares',
-};
+} as const;
 
-const stringToLocaleNumber = (value: number | string): string => {
-  const num = Number(value);
-  return num.toLocaleString();
-};
-
-const floatToPercent = (value: number | string): string => {
-  const num = Number(value);
-  return `${num} %`;
-};
-
-const FormatGridDataValueCases = {
-  interaction_rate: floatToPercent,
-  default: stringToLocaleNumber,
-};
-
-type GridData = {
-  label: string;
-  value: string;
-};
+// Stats that may return placeholder data
+const statsWithLoading = [
+  'Average Comments',
+  'Average Likes',
+  'Average Shares',
+  'Interaction-rate',
+];
 
 export const getServerSideProps: GetServerSideProps = async ({
   query,
   res,
 }) => {
-  const handle = String(query.handle);
-  const key = `/api/metrics/tiktok/users/${handle}`;
+  const username = String(query.username);
+  const key = `/api/metrics/tiktok/users/${username}`;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const props: Record<string, any> = {
@@ -65,8 +64,18 @@ export const getServerSideProps: GetServerSideProps = async ({
   }
 
   try {
-    const data = await getTikTokUserMetrics(handle);
+    const data = await getTikTokUserMetrics(username);
     props.fallback[key] = data;
+
+    // Navigate back to the home page if user does not exist
+    if (!data) {
+      return {
+        redirect: {
+          permanent: false,
+          destination: '/',
+        },
+      };
+    }
 
     res.setHeader(
       'Cache-Control',
@@ -75,15 +84,6 @@ export const getServerSideProps: GetServerSideProps = async ({
 
     return {
       props,
-      ...(!data
-        ? {
-            redirect: {
-              permanent: false,
-              // Navigate back to the home page if user does not exist
-              destination: '/',
-            },
-          }
-        : {}),
     };
   } catch (err) {
     return {
@@ -104,13 +104,40 @@ interface Props {
 export default function TikTokMetricsUserPage({ fallback }: Props) {
   const router = useRouter();
   const {
-    query: { handle, s },
+    query: { username, s },
   } = router;
   const { data, error } = useSWR<TikTokUserMetrics>(
-    () => handle && `/api/metrics/tiktok/users/${handle}`,
+    () => username && `/api/metrics/tiktok/users/${username}`,
     fetcher,
     { fallback, refreshInterval: 30_000 }
   );
+  const { data: videoData } = useSWR<TikTokVideoMetrics>(
+    () => username && `/api/metrics/tiktok/users-video-data/${username}`,
+    fetcher,
+    {
+      isPaused: () => !data || !data.meta.video_stats_loading,
+    }
+  );
+
+  const combinedData: TikTokUserMetrics | null = React.useMemo(() => {
+    if (!data) return null;
+    if (!videoData) return data;
+    return {
+      ...data,
+      metrics: {
+        ...data.metrics,
+        ...{
+          average_comments: videoData.comments,
+          average_likes: videoData.likes,
+          average_shares: videoData.shares,
+          interaction_rate: calcInteractionRate(
+            videoData,
+            data.metrics.average_video_views
+          ),
+        },
+      },
+    };
+  }, [data, videoData]);
 
   // client-side-only code
   if (typeof window !== 'undefined' && s) {
@@ -118,7 +145,7 @@ export default function TikTokMetricsUserPage({ fallback }: Props) {
     router.replace(
       {
         pathname: router.pathname,
-        query: { handle },
+        query: { username },
       },
       undefined,
       { shallow: true }
@@ -131,22 +158,25 @@ export default function TikTokMetricsUserPage({ fallback }: Props) {
   }
 
   const formattedData: GridData[] | null = React.useMemo(() => {
-    if (!data) return null;
-    const { metrics } = data;
+    if (!combinedData) return null;
+    const { metrics } = combinedData;
     return Object.entries(metrics).map(([key, metricValue]) => {
       const label = match(key, GridDataLabelMap, { emptyCaseValue: key });
-      const value = match(key, FormatGridDataValueCases)(metricValue);
+      const value = match(key, {
+        interaction_rate: floatToPercent,
+        default: stringToLocaleNumber,
+      })(metricValue);
 
       return {
         label,
         value,
       };
     });
-  }, [data]);
+  }, [combinedData]);
 
   return (
     <Layout>
-      <Seo templateTitle={`TikTok metrics for @${handle}`} />
+      <Seo templateTitle={`TikTok metrics for @${username}`} />
 
       <main>
         <section className='bg-white'>
@@ -161,7 +191,7 @@ export default function TikTokMetricsUserPage({ fallback }: Props) {
                     Showing data for
                   </p>
                   <p className='mb-8 w-full text-2xl font-semibold text-dark'>
-                    tiktok.com/@{handle}
+                    tiktok.com/@{username}
                   </p>
                   <div className='w-152 rounded-16 border-1 border-gray-400 p-4'>
                     <span
@@ -180,6 +210,11 @@ export default function TikTokMetricsUserPage({ fallback }: Props) {
                         data-cy={item.label}
                         index={index}
                         label={item.label}
+                        loading={
+                          statsWithLoading.includes(item.label) &&
+                          data?.meta.video_stats_loading &&
+                          !videoData
+                        }
                       >
                         {item.value}
                       </Metric>

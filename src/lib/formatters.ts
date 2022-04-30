@@ -1,3 +1,5 @@
+import { TikTokVideoMetrics } from '@/lib/scrapers';
+
 /**
  * Takes a string scraped from TikTok and converts it to a number
  * @param value Input value (ie. 5.3M, 3.2K, 6000, etc.)
@@ -27,22 +29,44 @@ export function formatTikTokNumbers(value: string | number): number {
   }
 }
 
-export function calcCreatorInteractionRate(
-  commentCount: number,
-  likesCount: number,
-  sharesCount: number,
-  viewsCount: number
-): number {
-  return Number(
-    ((commentCount + likesCount + sharesCount) / viewsCount).toFixed(2)
-  );
-}
-
-export function calcArrayAvg(array: number[]): number {
-  return array.reduce((a, b) => a + b, 0) / array.length;
-}
-
 export function calcAvg(value: number, total: number, floor?: boolean): number {
   const avg = value / total;
   return floor ? Math.floor(avg) : avg;
 }
+
+export function sum(...values: number[]): number {
+  return values.reduce((acc, value) => acc + value, 0);
+}
+
+export function calcArrayAvg(array: number[], floor?: boolean): number {
+  return calcAvg(
+    array.reduce((a, b) => a + b, 0),
+    array.length,
+    floor
+  );
+}
+
+export function calcInteractionRate(
+  metrics: TikTokVideoMetrics,
+  views: number
+): number {
+  const rate = Number(
+    (sum(metrics.comments, metrics.likes, metrics.shares) / views).toFixed(2)
+  );
+
+  return Number.isNaN(rate) ? 0 : rate;
+}
+
+export function formatTikTokUsername(username: string): string {
+  return username.startsWith('@') ? username : `@${username}`;
+}
+
+export const stringToLocaleNumber = (value: number | string): string => {
+  const num = Number(value);
+  return num.toLocaleString();
+};
+
+export const floatToPercent = (value: number | string): string => {
+  const num = Number(value);
+  return `${num} %`;
+};

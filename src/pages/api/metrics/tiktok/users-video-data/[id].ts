@@ -5,7 +5,7 @@ import {
   NOT_FOUND_JSON,
   VERIFICATION_ERROR_JSON,
 } from '@/lib/errors';
-import { getTikTokUserMetrics } from '@/lib/tiktok-api';
+import { getTikTokUserCompleteVideoMetrics } from '@/lib/tiktok-api';
 
 export default async function tiktokMetricsIdHandler(
   req: NextApiRequest,
@@ -18,7 +18,7 @@ export default async function tiktokMetricsIdHandler(
   }
 
   try {
-    const data = await getTikTokUserMetrics(id);
+    const data = await getTikTokUserCompleteVideoMetrics(id);
 
     // User not found case
     if (!data) {

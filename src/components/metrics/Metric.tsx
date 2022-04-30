@@ -1,3 +1,4 @@
+import { Ring } from '@uiball/loaders';
 import * as React from 'react';
 
 import clsxm from '@/lib/clsxm';
@@ -5,6 +6,7 @@ import clsxm from '@/lib/clsxm';
 type MetricProps = {
   label: string;
   index: number;
+  loading?: boolean;
 } & React.ComponentPropsWithoutRef<'div'>;
 
 export default function Metric({
@@ -12,6 +14,7 @@ export default function Metric({
   label,
   children,
   index,
+  loading = false,
   ...rest
 }: MetricProps) {
   return (
@@ -37,7 +40,11 @@ export default function Metric({
           {label}
         </p>
         <p data-cy='metric-value' className='text-3xl font-semibold text-dark'>
-          {children}
+          {loading ? (
+            <Ring size={30} lineWeight={5} speed={2.5} color='#0F1D40' />
+          ) : (
+            children
+          )}
         </p>
       </div>
     </div>

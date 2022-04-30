@@ -1,14 +1,21 @@
 import {
   calcArrayAvg,
-  calcCreatorInteractionRate,
+  calcAvg,
+  calcInteractionRate,
   formatTikTokNumbers,
+  formatTikTokUsername,
 } from '@/lib/formatters';
 import {
   getAllRegExpMatch,
   getFirstRegExpMatch,
   getNthRegExpMatch,
 } from '@/lib/regexp';
-import { scrapeNewestTikTokVideoStats, scrapeTikTokPage } from '@/lib/scrapers';
+import {
+  getAvailableUserVideosStats,
+  scrapeNewestTikTokVideoStats,
+  scrapeTikTokPage,
+  TikTokVideoMetrics,
+} from '@/lib/scrapers';
 
 const MAX_VIDEOS_TO_SCRAPE = 10;
 
@@ -24,96 +31,101 @@ export type TikTokUserMetrics = {
     average_likes: number;
     average_shares: number;
   };
+  meta: {
+    video_stats_loading: boolean;
+  };
 };
 
-export async function getMockTikTokUserMetrics(
-  identifier: string
-): Promise<TikTokUserMetrics> {
-  await new Promise((resolve) => setTimeout(resolve, 100));
-  return {
-    user: {
-      display_name: identifier,
-    },
-    metrics: {
-      total_followers: Math.floor(Math.random() * 100_000),
-      average_video_views: Math.floor(Math.random() * 100_000),
-      interaction_rate: Math.floor(Math.random() * 100),
-      average_comments: Math.floor(Math.random() * 10_000),
-      average_likes: Math.floor(Math.random() * 10_000),
-      average_shares: Math.floor(Math.random() * 10_000),
-    },
-  } as TikTokUserMetrics;
-}
-
 export async function getTikTokUserMetrics(identifier: string) {
-  if (identifier === 'fail') {
-    return null;
-  }
-
-  // append @ if not present
-  const username: string = identifier.startsWith('@')
-    ? identifier
-    : `@${identifier}`;
-
+  const username = formatTikTokUsername(identifier);
   const tikTokURL = `https://www.tiktok.com/${username}?lang=en`;
 
-  const { body } = await scrapeTikTokPage(tikTokURL);
+  const { body: profileHTML } = await scrapeTikTokPage(tikTokURL);
+  if (!profileHTML) return null;
 
-  if (!body) return null;
-
-  const tikTokName = getNthRegExpMatch(
-    body,
+  const tikTokName: string = getNthRegExpMatch(
+    profileHTML,
     /"@id":"https:\/\/www\.tiktok\.com\/@([a-zA-Z][a-zA-Z0-9-_.]{1,24})","name":"(.{1,30}) \(/,
     2
   );
-
   if (!tikTokName) return null;
 
-  const tikTokFollowers = getFirstRegExpMatch(
-    body,
+  const tikTokFollowers: string = getFirstRegExpMatch(
+    profileHTML,
     /followers-count">([0-9.\w]+)</
   );
 
-  const tikTokVideoCounts = getAllRegExpMatch(
-    body,
+  const tikTokVideoViews: number[] = getAllRegExpMatch(
+    profileHTML,
     /<strong data-e2e="video-views" class="video-count [\w\d\s-]+">(.{1,15})<\/strong>/g,
     (m) => m[1],
     MAX_VIDEOS_TO_SCRAPE
   ).map(formatTikTokNumbers);
 
-  const avgTikTokVideoViews = calcArrayAvg(tikTokVideoCounts);
+  const avgTikTokVideoViews: number = calcArrayAvg(tikTokVideoViews);
 
-  const metrics = await scrapeNewestTikTokVideoStats(
+  const metrics: TikTokVideoMetrics[] = await getAvailableUserVideosStats(
     username,
-    MAX_VIDEOS_TO_SCRAPE
+    MAX_VIDEOS_TO_SCRAPE,
+    profileHTML
   );
 
-  const {
-    comments: average_comments,
-    likes: average_likes,
-    shares: average_shares,
-  } = metrics;
+  // Sum all the metrics
+  const combinedStats = metrics.reduce(
+    (acc, curr) => {
+      acc.comments += curr.comments;
+      acc.likes += curr.likes;
+      acc.shares += curr.shares;
+      return acc;
+    },
+    {
+      likes: 0,
+      comments: 0,
+      shares: 0,
+    } as TikTokVideoMetrics
+  );
 
-  const data: TikTokUserMetrics = {
+  // Average all of the stats togther
+  const averagedStats = Object.entries(combinedStats).reduce(
+    (acc, [key, value]) => ({
+      ...acc,
+      [key]: calcAvg(value, metrics.length, true),
+    }),
+    {} as TikTokVideoMetrics
+  );
+
+  const data = {
     user: {
       display_name: tikTokName,
     },
     metrics: {
       total_followers: formatTikTokNumbers(tikTokFollowers),
       average_video_views: avgTikTokVideoViews,
-      average_comments,
-      average_likes,
-      average_shares,
-      interaction_rate: 0,
+      average_comments: averagedStats.comments,
+      average_likes: averagedStats.likes,
+      average_shares: averagedStats.shares,
+      interaction_rate: calcInteractionRate(averagedStats, avgTikTokVideoViews),
     },
-  };
-
-  data.metrics.interaction_rate = calcCreatorInteractionRate(
-    data.metrics.average_comments,
-    data.metrics.average_likes,
-    data.metrics.average_shares,
-    data.metrics.average_video_views
-  );
+    meta: {
+      // Loading state if there was missing video data that can be fetched again
+      video_stats_loading: !metrics.length,
+    },
+  } as TikTokUserMetrics;
 
   return data;
 }
+
+/**
+ * Get the latest TikTok video stats for a user (slow)
+ */
+export async function getTikTokUserCompleteVideoMetrics(
+  username: string
+): Promise<TikTokVideoMetrics> {
+  const metrics = await scrapeNewestTikTokVideoStats(
+    formatTikTokUsername(username),
+    MAX_VIDEOS_TO_SCRAPE
+  );
+
+  return metrics;
+}
+1;

@@ -119,10 +119,12 @@ I am aware of a few bugs, I didn't have time to resolve all of them
 
 - Minor responsive issues with cells that have very large numbers
   - Solution would be to either change number formatting (using K/M units) or fine-tune the responsive behaviour of the flex grid
-- Profile images won't always load correctly
-  - I implemented this pretty late before I remembered how the images get pre-rendered, there's a few easy ways to deal with it, but it seemed low priority
-- Hydration errors during development for accounts with less than 10 videos
-  - Didn't seem high priority to tackle this one either
+- ~~Profile images won't always load correctly~~
+  - ~~I implemented this pretty late before I remembered how the images get pre-rendered, there's a few easy ways to deal with it, but it seemed low priority~~
+  - Edit: resolved
+- ~~Hydration errors during development for accounts with less than 10 videos~~
+  - ~~Didn't seem high priority to tackle this one either~~
+  - Edit: resolved
 - Video stat averages are off
   - I didn't spend much time on the calculation logic for these numbers, it looks like it needs some tweaking at least for accounts with fewer than 10 videos
 - There appears to be some cases where my scraper is getting video IDs belonging to other creators

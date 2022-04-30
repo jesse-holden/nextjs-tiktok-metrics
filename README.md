@@ -103,6 +103,16 @@ Initially, I was going to deploy this app to Vercel. But I ran into a compatibil
 
 I also momentarily ran into an issue on Netlify, there is a missing library required for SQLite to run. I had only intended to use the SQLite store for local development, but I had to remove the package for compatibility reasons and default to the memory store. It also didn't seem worth the effort to spin up a Redis store for a test like this to allow for shared cache across all edge server (would reduce chances of scraping detection from TikTok by ensuring all cache is re-used globally).
 
+### TypeScript
+
+I have been using TypeScript very extensively over the last 3 years, so I wanted to demonstrate some more advanced patterns by implementing my own version of a case/switch statement
+
+`src/lib/match-case.ts`
+
+This function makes writing switch statements easier, and they take up fewer lines of code for larger sets of conditions. I tried to make this utility function extensible, but most importantly, it has full type-safety, that way your editor and compiler will always correctly detect any invalid cases or uses of the result. I even set it up to allow for situations with many different expected types in the cases argument.
+
+For documentation about this function, I added some JSDocs describing the parameters, and set up some tests to show expected behaviours.
+
 ### Bugs
 
 I am aware of a few bugs, I didn't have time to resolve all of them

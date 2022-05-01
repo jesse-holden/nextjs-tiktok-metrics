@@ -5,11 +5,7 @@ import {
   formatTikTokNumbers,
   formatTikTokUsername,
 } from '@/lib/formatters';
-import {
-  getAllRegExpMatch,
-  getFirstRegExpMatch,
-  getNthRegExpMatch,
-} from '@/lib/regexp';
+import { getAllRegExpMatch, getFirstRegExpMatch } from '@/lib/regexp';
 import {
   getAvailableUserVideosStats,
   scrapeNewestTikTokVideoStats,
@@ -44,27 +40,26 @@ export async function getTikTokUserMetrics(identifier: string) {
   const { body: profileHTML } = await scrapeTikTokPage(tikTokURL);
   if (!profileHTML) return null;
 
-  const tikTokName: string = getNthRegExpMatch(
+  const tikTokName: string = getFirstRegExpMatch(
     profileHTML,
-    /"@id":"https:\/\/www\.tiktok\.com\/@([a-zA-Z][a-zA-Z0-9-_.]{1,24})","name":"(.{1,30}) \(/,
-    2
+    /"@id":"https:\/\/www\.tiktok\.com\/@(?:[a-zA-Z0-9-_.]{1,24})","name":"(.{1,30}) \(/
   );
   if (!tikTokName) return null;
 
   const tikTokAvatarURL: string =
     getFirstRegExpMatch(
       profileHTML,
-      /<style data-emotion="tiktok .{1,10}-ImgAvatar">.{1,100}<img loading="lazy" src="(.{1,250})" class="tiktok-.{1,10}-ImgAvatar/
+      /<div (?:.*?) data-e2e="user-avatar"(?:.+?)<img loading="lazy" src="(.+?)"/
     ) || '';
 
   const tikTokFollowers: string = getFirstRegExpMatch(
     profileHTML,
-    /followers-count">([0-9.\w]+)</
+    /followers-count">([0-9.\w]+?)</
   );
 
   const tikTokVideoViews: number[] = getAllRegExpMatch(
     profileHTML,
-    /<strong data-e2e="video-views" class="video-count [\w\d\s-]+">(.{1,15})<\/strong>/g,
+    /<strong data-e2e="video-views" class="video-count [\w\d\s-]+?">(.+?)<\/strong>/g,
     (m) => m[1],
     MAX_VIDEOS_TO_SCRAPE
   ).map(formatTikTokNumbers);

@@ -25,20 +25,11 @@ export async function scrapeTikTokPage(
 ): Promise<{ body: string | null; cached: boolean }> {
   const cacheKey = `${tikTokCacheKeys.page}-${url}`;
   const tsCacheKey = `${tikTokCacheKeys.pageTs}-${url}`;
-  const cached = await cacheStore.get(cacheKey);
+  const cached = (await cacheStore.get(cacheKey)) as string | null;
   let body = cached;
 
   if (!cached) {
-    // Set cookie here if running into scraping errors
-    // await setCookie('sid_tt=abc123', '.tiktok.com');
-    // await setCookie(
-    //   'sessionid=abc123',
-    //   '.tiktok.com'
-    // );
-    const Tok = await fetchTikTokURL(url);
-    if (Tok.body) {
-      body = Tok.body;
-    }
+    body = await fetchTikTokURL(url);
   }
 
   try {
@@ -49,9 +40,9 @@ export async function scrapeTikTokPage(
       if (verifyCheck) {
         // wait 1 second then try again
         await new Promise((resolve) => setTimeout(resolve, 1000));
-        const Tok = await fetchTikTokURL(url);
-        if (Tok.body) {
-          body = Tok.body;
+        const res = await fetchTikTokURL(url);
+        if (res) {
+          body = res;
           const secondVerifyCheck = getFirstRegExpMatch(
             body,
             verifyCheckRegexp
@@ -132,15 +123,8 @@ export async function scrapeNewestTikTokVideoStats(
       continue;
     }
 
-    const { data, cached } = await scrapeTikTokVideoStats(videoURL);
+    const { data } = await scrapeTikTokVideoStats(videoURL);
     const { comments, shares, likes } = data ?? emptyStats;
-    if (!cached) {
-      // console.log('waiting before next fetch...');
-      // wait 1 to 2 seconds
-      await new Promise((resolve) =>
-        setTimeout(resolve, Math.max(1000, Math.random() * 2000))
-      );
-    }
     allVideoStats.likes += likes;
     allVideoStats.comments += comments;
     allVideoStats.shares += shares;

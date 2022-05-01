@@ -9,6 +9,7 @@
 </div>
 
 Check out the 👉 [live demo on netlify](https://nextjs-tiktok-metrics.netlify.app/) 👈
+Vercel demo as well: [live demo on vercel](https://nextjs-tiktok-metrics.vercel.app/) 👈
 
 ## Features
 

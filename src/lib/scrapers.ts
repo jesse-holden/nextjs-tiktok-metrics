@@ -116,15 +116,7 @@ export async function scrapeNewestTikTokVideoStats(
     const videoURL = `https://www.tiktok.com/${username}/video/${videoId}`;
     const { data: videoStats } = await scrapeTikTokVideoStats(videoURL);
 
-    if (videoStats) {
-      allVideoStats.likes += videoStats.likes;
-      allVideoStats.comments += videoStats.comments;
-      allVideoStats.shares += videoStats.shares;
-      continue;
-    }
-
-    const { data } = await scrapeTikTokVideoStats(videoURL);
-    const { comments, shares, likes } = data ?? emptyStats;
+    const { comments, shares, likes } = videoStats ?? emptyStats;
     allVideoStats.likes += likes;
     allVideoStats.comments += comments;
     allVideoStats.shares += shares;
